@@ -1,0 +1,32 @@
+## Build outputs
+[Bb]in/
+[Oo]bj/
+
+## Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+
+## Rider & IntelliJ files
+.idea/
+*.user
+
+## VS Code files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/code-workspace
+
+## OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Local settings
+appsettings.local.json
+appsettings.Development.json
