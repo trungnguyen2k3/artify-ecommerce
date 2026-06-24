@@ -1,0 +1,13 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace Artify_ecommerce.Models;
+
+public partial class Material
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public virtual ICollection<FinishType> FinishTypes { get; set; } = new List<FinishType>();
+}
