@@ -21,4 +21,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Artify-ecommerce.Tests\**" />
+    <Content Remove="Artify-ecommerce.Tests\**" />
+    <EmbeddedResource Remove="Artify-ecommerce.Tests\**" />
+    <None Remove="Artify-ecommerce.Tests\**" />
+  </ItemGroup>
+
 </Project>

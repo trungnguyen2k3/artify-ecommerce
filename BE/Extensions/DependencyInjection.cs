@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Artify_ecommerce.Data;
+using Artify_ecommerce.Services;
 
 namespace Artify_ecommerce.Extensions
 {
@@ -28,7 +29,7 @@ namespace Artify_ecommerce.Extensions
             });
 
             // 3. Đăng ký các service nghiệp vụ khác ở đây (ví dụ: Service, Repository)
-            // services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IBlogProductService, BlogProductService>();
 
             return services;
         }

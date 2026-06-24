@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Artify_ecommerce.Helpers;
+using Artify_ecommerce.Exceptions;
 
 namespace Artify_ecommerce.Middlewares
 {
@@ -42,18 +43,44 @@ namespace Artify_ecommerce.Middlewares
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-
+            
+            var statusCode = HttpStatusCode.InternalServerError;
             var errorMessage = "Đã xảy ra lỗi máy chủ nội bộ. Vui lòng thử lại sau.";
             List<string>? errors = null;
 
-            // Nếu đang chạy ở môi trường Development, hiển thị chi tiết stack trace để debug dễ dàng hơn
-            if (_env.IsDevelopment())
+            switch (exception)
             {
-                errorMessage = exception.Message;
-                errors = new List<string> { exception.StackTrace ?? string.Empty };
+                case NotFoundException notFoundEx:
+                    statusCode = HttpStatusCode.NotFound;
+                    errorMessage = notFoundEx.Message;
+                    break;
+                case BadRequestException badRequestEx:
+                    statusCode = HttpStatusCode.BadRequest;
+                    errorMessage = badRequestEx.Message;
+                    break;
+                case ConflictException conflictEx:
+                    statusCode = HttpStatusCode.Conflict;
+                    errorMessage = conflictEx.Message;
+                    break;
+                case ForbiddenException forbiddenEx:
+                    statusCode = HttpStatusCode.Forbidden;
+                    errorMessage = forbiddenEx.Message;
+                    break;
+                case UnauthorizedException unauthorizedEx:
+                    statusCode = HttpStatusCode.Unauthorized;
+                    errorMessage = unauthorizedEx.Message;
+                    break;
+                default:
+                    // Đối với các lỗi chưa được xử lý khác, nếu trong môi trường Dev thì hiển thị chi tiết lỗi
+                    if (_env.IsDevelopment())
+                    {
+                        errorMessage = exception.Message;
+                        errors = new List<string> { exception.StackTrace ?? string.Empty };
+                    }
+                    break;
             }
 
+            context.Response.StatusCode = (int)statusCode;
             var response = new ApiResponse(errorMessage, errors);
 
             var jsonOptions = new JsonSerializerOptions 

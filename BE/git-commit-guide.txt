@@ -1,0 +1,67 @@
+========================================================================
+HƯỚNG DẪN VIẾT COMMIT GIT CHUẨN (CONVENTIONAL COMMITS STYLE)
+========================================================================
+
+Viết commit message đúng chuẩn giúp các thành viên trong đội ngũ, người
+quản lý dự án dễ dàng theo dõi lịch sử code, tự động hóa việc tạo changelog
+và phát hành phiên bản.
+
+------------------------------------------------------------------------
+1. CẤU TRÚC CÔNG THỨC COMMIT CHUẨN
+------------------------------------------------------------------------
+
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+
+Trong đó:
+- <type>: BẮT BUỘC. Loại thay đổi (Xem danh sách phân loại ở mục 2).
+- <scope>: KHÔNG BẮT BUỘC. Phạm vi code thay đổi (Ví dụ: auth, products, db).
+- <subject>: BẮT BUỘC. Mô tả ngắn gọn (< 50 ký tự), sử dụng câu lệnh mệnh lệnh,
+             không viết hoa chữ cái đầu, không có dấu chấm ở cuối.
+- <body>: KHÔNG BẮT BUỘC. Mô tả chi tiết thay đổi là gì, tại sao phải làm vậy.
+- <footer>: KHÔNG BẮT BUỘC. Ghi chú về breaking changes hoặc tham chiếu ID task/issue.
+
+------------------------------------------------------------------------
+2. CÁC PHÂN LOẠI (TYPES) PHỔ BIẾN
+------------------------------------------------------------------------
+
+- feat:     Thêm một tính năng (feature) mới cho API.
+  * Ví dụ: feat(auth): add google sign-in login API
+
+- fix:      Sửa một lỗi (bug) trong hệ thống.
+  * Ví dụ: fix(products): resolve null reference when product has no photo
+
+- docs:     Thay đổi về tài liệu (README, comments, swagger documentation).
+  * Ví dụ: docs(readme): update setup guidelines and database migration steps
+
+- style:    Thay đổi không ảnh hưởng đến logic code (format, khoảng trắng, thiếu dấu chấm phẩy).
+  * Ví dụ: style(controllers): format imports and remove unused using statements
+
+- refactor: Tái cấu trúc lại mã nguồn không làm thay đổi logic hoặc thêm tính năng/sửa bug.
+  * Ví dụ: refactor(services): split long database query helper into small methods
+
+- test:     Thêm mới, cập nhật các ca kiểm thử (unit tests, integration tests).
+  * Ví dụ: test(blog): add unit tests for BlogProductService get by id method
+
+- chore:    Các thay đổi về build, setup môi trường, dependency, gitignore, package.json.
+  * Ví dụ: chore(deps): upgrade entity framework core packages to version 10.0.9
+
+------------------------------------------------------------------------
+3. QUY TRÌNH CÁC BƯỚC COMMIT TRONG TERMINAL
+------------------------------------------------------------------------
+
+Bước 1: Kiểm tra các file thay đổi
+   git status
+
+Bước 2: Đưa các file muốn commit vào khu vực chờ (Staging)
+   git add .   (Hoặc: git add TenFileCuThe.cs)
+
+Bước 3: Commit code kèm tin nhắn đúng chuẩn
+   git commit -m "feat(api): setup global exception handling middleware"
+
+Bước 4: Đẩy code lên GitHub
+   git push origin main
+========================================================================

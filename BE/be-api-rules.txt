@@ -1,0 +1,74 @@
+========================================================================
+QUY TẮC VÀ TIÊU CHUẨN PHÁT TRIỂN BACKEND REST API CHUẨN
+========================================================================
+
+Để hệ thống luôn sạch sẽ, dễ bảo trì và mở rộng, hãy nghiêm túc tuân thủ
+các quy tắc phát triển dưới đây.
+
+------------------------------------------------------------------------
+1. THIẾT KẾ ENDPOINTS API (RESTful standards)
+------------------------------------------------------------------------
+- Đặt tên endpoint là DANH TỪ SỐ NHIỀU, không dùng động từ.
+  * Đúng:    GET /api/shop-products            (Lấy danh sách sản phẩm)
+             GET /api/shop-products/{id}       (Lấy chi tiết sản phẩm)
+             POST /api/shop-products           (Tạo sản phẩm mới)
+  * Sai:     GET /api/getAllShopProducts
+             POST /api/createNewProduct
+
+- Sử dụng đúng phương thức HTTP (HTTP Methods):
+  * GET:     Lấy dữ liệu. Không làm thay đổi dữ liệu dưới DB.
+  * POST:    Tạo mới tài nguyên.
+  * PUT:     Cập nhật toàn bộ đối tượng.
+  * PATCH:   Cập nhật một vài thuộc tính đơn lẻ.
+  * DELETE:  Xóa tài nguyên.
+
+------------------------------------------------------------------------
+2. QUY CHUẨN RESPONSE TRẢ VỀ (Response Enveloping)
+------------------------------------------------------------------------
+- Bất kỳ API nào cũng phải trả về định dạng JSON đồng nhất bằng cách bọc trong
+  class ApiResponse<T>.
+- Luôn sử dụng đúng mã trạng thái HTTP (HTTP Status Codes):
+  * 200 OK:                  Thực thi thành công và có dữ liệu trả về.
+  * 201 Created:             Tạo mới thành công.
+  * 204 No Content:          Thực thi thành công nhưng không cần trả dữ liệu.
+  * 400 Bad Request:         Dữ liệu client gửi lên bị sai logic hoặc thiếu.
+  * 401 Unauthorized:        Chưa đăng nhập hoặc token sai/hết hạn.
+  * 403 Forbidden:           Đã đăng nhập nhưng không đủ quyền truy cập.
+  * 404 Not Found:           Không tìm thấy bản ghi/api.
+  * 409 Conflict:            Trùng lặp dữ liệu (ví dụ trùng Email, SKU).
+  * 500 Internal Server Error: Lỗi code hệ thống (được middleware bắt tự động).
+
+------------------------------------------------------------------------
+3. PHÂN CHIA TẦNG KIẾN TRÚC (Separation of Concerns)
+------------------------------------------------------------------------
+- CONTROLLER:
+  * Chỉ tiếp nhận request, điều hướng và trả về response (Ok, BadRequest...).
+  * KHÔNG viết logic xử lý database, KHÔNG thực hiện tính toán ở controller.
+  * KHÔNG cần sử dụng try-catch ở controller. Hãy để ExceptionHandlingMiddleware
+    xử lý lỗi.
+
+- SERVICE:
+  * Chứa toàn bộ logic nghiệp vụ và truy vấn database.
+  * Nếu dữ liệu không hợp lệ, chủ động: throw new BadRequestException("...");
+  * Nếu không tìm thấy: throw new NotFoundException("...");
+
+- DTO (Data Transfer Object):
+  * Luôn luôn trả về DTO cho client. KHÔNG bao giờ được trả về trực tiếp file
+    Entity từ database (ví dụ: BlogProduct.cs) ra ngoài API vì lý do bảo mật
+    và tăng hiệu năng.
+
+------------------------------------------------------------------------
+4. AN TOÀN THÔNG TIN VÀ BẢO MẬT (Security)
+------------------------------------------------------------------------
+- Không bao giờ được commit file appsettings.json hoặc các thông tin mật như
+  Connection String, Key token lên Git.
+- Tuân thủ luồng gitignore để bảo vệ an toàn code.
+
+------------------------------------------------------------------------
+5. QUY TẮC VIẾT UNIT TEST
+------------------------------------------------------------------------
+- Mỗi khi code thêm logic nghiệp vụ trong Service, hãy viết Unit Test cho nó.
+- Giả lập database bằng DbContext In-Memory để test nhanh gọn, sạch sẽ.
+- Biết cách test cả 2 trường hợp: Thành công (trả về đúng DTO) và Thất bại (ném
+  đúng Custom Exception).
+========================================================================
