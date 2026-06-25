@@ -51,6 +51,8 @@ app.UseHttpsRedirection();
 // Kích hoạt chính sách CORS
 app.UseCors("CorsPolicy");
 
+app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

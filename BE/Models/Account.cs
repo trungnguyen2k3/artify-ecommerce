@@ -23,5 +23,9 @@ public partial class Account
 
     public string? Username { get; set; }
 
+    public string? RefreshToken { get; set; }
+
+    public DateTime? RefreshTokenExpiryTime { get; set; }
+
     public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 }
