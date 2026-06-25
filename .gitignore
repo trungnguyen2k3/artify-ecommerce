@@ -1,0 +1,37 @@
+# Root .gitignore for Artify E-commerce (Full-stack)
+
+# =========================================================================
+# Frontend (ReactJS / Vite)
+# =========================================================================
+FE/node_modules/
+FE/dist/
+FE/dist-ssr/
+FE/*.local
+FE/.eslintcache
+
+# =========================================================================
+# Backend (.NET C#)
+# =========================================================================
+BE/[Bb]in/
+BE/[Oo]bj/
+BE/.vs/
+BE/*.user
+BE/*.userosscache
+BE/*.suo
+BE/*.userprefs
+BE/*.sln.docstates
+BE/appsettings.Development.json
+
+# =========================================================================
+# General IDE / OS files
+# =========================================================================
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
