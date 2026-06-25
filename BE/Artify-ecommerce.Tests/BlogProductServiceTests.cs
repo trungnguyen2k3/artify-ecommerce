@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using FluentAssertions;
-using Artify_ecommerce.Data;
 using Artify_ecommerce.Models;
 using Artify_ecommerce.Services;
 using Artify_ecommerce.Exceptions;
