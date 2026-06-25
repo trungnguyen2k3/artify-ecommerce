@@ -2,7 +2,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Artify_ecommerce.DTOs;
 using Artify_ecommerce.Helpers;
-using Artify_ecommerce.Services;
+using Artify_ecommerce.Services.Interfaces;
 
 namespace Artify_ecommerce.Controllers
 {

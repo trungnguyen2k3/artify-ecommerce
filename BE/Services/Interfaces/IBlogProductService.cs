@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Artify_ecommerce.DTOs;
 
-namespace Artify_ecommerce.Services
+namespace Artify_ecommerce.Services.Interfaces
 {
     /// <summary>
     /// Giao diện định nghĩa các nghiệp vụ xử lý của Blog Product

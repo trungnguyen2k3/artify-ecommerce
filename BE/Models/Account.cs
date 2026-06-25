@@ -19,7 +19,9 @@ public partial class Account
 
     public DateTime? LastLogin { get; set; }
 
-    public string? CartShareCode { get; set; }
+    public string? Password { get; set; }
+
+    public string? Username { get; set; }
 
     public virtual ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
 }
