@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Artify_ecommerce.Data;
+using Artify_ecommerce.Models;
 using Artify_ecommerce.DTOs;
 using Artify_ecommerce.Exceptions;
 using Artify_ecommerce.Services.Interfaces;
