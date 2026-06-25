@@ -5,7 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
-
+builder.Services.Configure<RouteOptions>(options => 
+{
+    options.LowercaseUrls = true; // Tự động chuyển toàn bộ URL API thành chữ thường
+});
 // Đăng ký các dịch vụ hệ thống thông qua Dependency Injection Extension
 builder.Services.AddWebApiServices(builder.Configuration);
 
