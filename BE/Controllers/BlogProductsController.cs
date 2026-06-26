@@ -3,11 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Artify_ecommerce.DTOs;
 using Artify_ecommerce.Helpers;
 using Artify_ecommerce.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Artify_ecommerce.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles ="User")]
     public class BlogProductsController : ControllerBase
     {
         private readonly IBlogProductService _blogProductService;
