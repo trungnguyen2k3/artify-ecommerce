@@ -1,147 +1,137 @@
-# Hướng dẫn chi tiết nhất về JWT (JSON Web Token) & Lưu trữ Cookie HttpOnly
+# Hướng dẫn chi tiết về JWT & Refresh Token trong ASP.NET Core
 
-Tài liệu này cung cấp kiến thức toàn diện về JWT (cấu trúc, cơ chế hoạt động) và phân tích các phương án lưu trữ JWT ở Client, đặc biệt tập trung vào **HttpOnly Cookie** cùng bộ câu hỏi phỏng vấn chuẩn bị cho lập trình viên.
+Tài liệu này giải thích chi tiết cơ chế hoạt động, cấu trúc, luồng chạy thực tế và các phương pháp bảo mật tối ưu khi áp dụng bộ đôi **Access Token (JWT)** & **Refresh Token** trong ứng dụng REST API.
 
 ---
 
-## 1. Cấu trúc chuẩn nhất và chi tiết nhất của JWT
+## 1. Khái niệm cơ bản
 
-Một chuỗi JWT (JSON Web Token) theo tiêu chuẩn **RFC 7519** gồm 3 phần được phân tách bằng dấu chấm (`.`):
-$$\text{Header} . \text{Payload} . \text{Signature}$$
+### 1.1. JWT (JSON Web Token) là gì?
+JWT là một định danh chuẩn hóa dưới dạng chuỗi mã hóa an toàn dùng để truyền tải thông tin giữa Client và Server dưới dạng một đối tượng JSON. Thông tin này có thể được xác minh và tin cậy vì nó chứa **Chữ ký số (Signature)**.
 
+### 1.2. Access Token là gì?
+*   Là một chuỗi JWT ngắn hạn (thường sống từ 5 - 15 phút).
+*   Được gửi kèm trong **mỗi HTTP Request** (thông qua header `Authorization: Bearer <Access_Token>`) để chứng minh danh tính và quyền truy cập vào các tài nguyên bảo mật.
+
+### 1.3. Refresh Token là gì?
+*   Là một chuỗi ngẫu nhiên dài hạn (thường sống từ 7 - 30 ngày).
+*   Được lưu trữ an toàn trong Database của Server và lưu ở Cookie của Client.
+*   **Mục đích duy nhất**: Dùng để đổi lấy một Access Token mới khi Access Token cũ hết hạn mà không bắt người dùng phải đăng nhập lại bằng Username/Password.
+
+---
+
+## 2. Cấu trúc của JWT
+Một token JWT bao gồm 3 phần được phân tách bằng dấu chấm (`.`): `Header.Payload.Signature`
+
+```mermaid
+graph LR
+    A[Header] -->|.| B[Payload]
+    B -->|.| C[Signature]
 ```
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjUsInJvbGUiOiJBZG1pbiIsImV4cCI6MTc4MTcxNzYwMH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
-[--------- HEADER ---------] [----------- PAYLOAD -----------] [----------- SIGNATURE -----------]
-```
 
-### 1.1. Header (Đầu)
-Header chứa siêu dữ liệu về token, được mã hóa dưới dạng **Base64Url**. Nội dung JSON sau khi giải mã thường có dạng:
+### 2.1. Header (Phần đầu)
+Chứa thông tin metadata của token gồm loại token (`typ`) và thuật toán ký số (`alg`), ví dụ: `HS256` (HMAC SHA-256).
 ```json
 {
   "alg": "HS256",
   "typ": "JWT"
 }
 ```
-* **`alg` (Algorithm)**: Thuật toán mã hóa dùng để ký (ví dụ: `HS256` - HMAC SHA-256, hoặc `RS256` - RSA với SHA-256).
-* **`typ` (Type)**: Loại token (luôn là `JWT`).
 
----
-
-### 1.2. Payload (Thân / Các Claims)
-Payload chứa các **Claims** (tuyên bố thông tin về thực thể, ví dụ như thông tin User). Có 3 loại Claims tiêu chuẩn:
-
-#### A. Registered Claims (Các Claim chuẩn hóa quốc tế)
-Đây là các claim được định nghĩa sẵn trong tiêu chuẩn RFC 7519. Chúng không bắt buộc nhưng **khuyên dùng để tương thích quốc tế**:
-* **`iss` (Issuer)**: Định danh của Server phát hành Token (ví dụ: `api.artify.com`).
-* **`sub` (Subject)**: Chủ đề của Token (thường là mã định danh duy nhất của User, ví dụ: `userId`).
-* **`aud` (Audience)**: Đối tượng sử dụng Token (ví dụ: `artify.com` hoặc client app).
-* **`exp` (Expiration Time)**: Thời điểm hết hạn của Token (được lưu dưới dạng **Unix Timestamp** - số giây tính từ 1/1/1970). Token gửi lên sau thời điểm này sẽ bị từ chối.
-* **`nbf` (Not Before)**: Thời điểm Token bắt đầu có hiệu lực. Trước thời điểm này, Token không được chấp nhận.
-* **`iat` (Issued At)**: Thời điểm Token được tạo ra.
-* **`jti` (JWT ID)**: ID duy nhất cho Token này. Dùng để tránh bị tấn công Replay Attack (Server lưu `jti` này và từ chối nếu nó bị gửi lại).
-
-#### B. Public Claims
-Các claim do lập trình viên định nghĩa tự do nhưng nên đăng ký ở Registry của IANA để tránh trùng lặp nếu làm việc đa hệ thống.
-
-#### C. Private Claims
-Các claim tự định nghĩa nội bộ giữa Client và Server (ví dụ: `username`, `email`, `role`).
+### 2.2. Payload (Phần thân chứa các Claims)
+Chứa thông tin của đối tượng (User). Các thông tin này được gọi là các **Claims** (lời khẳng định):
 ```json
 {
-  "sub": "1234567890",
-  "name": "Nguyen Van A",
-  "role": "Admin",
-  "exp": 1781717600
+  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier": "1",
+  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": "Nguyễn Văn A",
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role": "User",
+  "exp": 1782384800,
+  "iss": "ArtifyIssuer",
+  "aud": "ArtifyAudience"
 }
 ```
 > [!WARNING]
-> **Payload chỉ được mã hóa Base64Url chứ không bảo mật thông tin.** Bất kỳ ai cũng có thể giải mã Payload để xem dữ liệu. Tuyệt đối **KHÔNG** lưu thông tin nhạy cảm như Mật khẩu, số thẻ ngân hàng vào đây.
+> Phần Payload này chỉ được mã hóa dạng **Base64Url** chứ không được che giấu bí mật. Bất cứ ai có token cũng có thể giải mã để đọc nội dung. Vì vậy, **tuyệt đối không để mật khẩu hoặc thông tin nhạy cảm ở đây**.
 
----
-
-### 1.3. Signature (Chữ ký)
-Chữ ký dùng để xác minh tính toàn vẹn của Token (đảm bảo Token không bị sửa đổi trên đường truyền). 
-
-Cách tạo Signature:
-1. Lấy chuỗi `Header` (Base64Url) và ghép với `Payload` (Base64Url) bằng dấu chấm `.`.
-2. Dùng một khóa bí mật (**Secret Key**) chỉ Server biết.
-3. Chạy qua thuật toán đã khai báo ở Header (ví dụ: HS256).
-
-$$\text{Signature} = \text{HMACSHA256}(\text{Header} + "." + \text{Payload}, \text{Secret Key})$$
-
----
-
-## 2. Cơ chế Lưu trữ và Truyền tải JWT ở Client
-
-Khi đưa vào dự án thực tế, bạn phải cân nhắc lưu JWT ở đâu tại Client (Frontend). Dưới đây là phân tích chi tiết:
-
-### 2.1. Phân biệt các hình thức lưu trữ tại Client
-
-| Tiêu chí | LocalStorage / SessionStorage | HttpOnly & Secure Cookie |
-| :--- | :--- | :--- |
-| **Vị trí lưu** | Bộ nhớ cục bộ của Trình duyệt. | Bộ nhớ Cookie của Trình duyệt. |
-| **Cách ghi/đọc** | Sử dụng JavaScript: `localStorage.getItem('token')` | **Server** gửi Header `Set-Cookie`. Trình duyệt tự động nhận và lưu trữ. **JavaScript ở FE không thể đọc/ghi được.** |
-| **Cách gửi lên Server** | Phải viết code JS tự đính kèm vào Header `Authorization: Bearer <token>`. | **Trình duyệt tự động đính kèm** vào Header `Cookie` ở mọi Request gửi đến đúng domain của Server. |
-| **Chống XSS (Mã độc)** | **Không an toàn**: Nếu hacker chèn được JS vào trang web, chúng sẽ đánh cắp được token. | **An toàn tuyệt đối**: JavaScript không được phép tiếp cận nhờ cờ `HttpOnly`. |
-| **Chống CSRF (Giả mạo)** | **An toàn**: Trình duyệt không tự gửi nên hacker không thể giả mạo Request từ trang khác. | **Có rủi ro**: Do cơ chế tự động gửi của trình duyệt. Cần cấu hình `SameSite=Lax` hoặc `Strict` để khắc phục. |
-
----
-
-### 2.2. Luồng hoạt động chi tiết của HttpOnly Cookie
-
-```mermaid
-sequenceDiagram
-    participant FE as Client (Trình duyệt)
-    participant BE as Server (ASP.NET Core)
-    
-    FE->>BE: 1. Đăng nhập (POST /api/auth/login)
-    BE->>BE: Xác thực & Tạo chuỗi JWT
-    BE-->>FE: 2. Trả Response + Header: Set-Cookie: access_token=JWT; HttpOnly; Secure; SameSite=Lax
-    Note over FE: Trình duyệt tự nhận cookie này.<br/>JavaScript (Frontend) không thể đọc được chuỗi JWT.
-    FE->>BE: 3. Gửi Request cần xác thực (ví dụ: GET /api/profile)
-    Note over FE: Trình duyệt tự động đính kèm Cookie chứa JWT vào Header.
-    BE->>BE: 4. Server đọc Cookie, giải mã JWT, trả về data profile
-    BE-->>FE: 5. Response dữ liệu Profile
+### 2.3. Signature (Chữ ký số)
+Dùng để xác thực tính toàn vẹn của token (chống giả mạo). Được tạo ra bằng cách lấy chuỗi mã hóa của Header + Payload băm với một khóa bí mật (`Secret Key`) chỉ Server biết:
+```text
+HMACSHA256(
+  base64UrlEncode(header) + "." +
+  base64UrlEncode(payload),
+  SecretKey
+)
 ```
 
 ---
 
-## 3. Kiến trúc Bảo mật Thực tế (Dual Token Best Practice)
+## 3. Luồng hoạt động chi tiết (Workflow)
 
-Để giải quyết triệt để cả **XSS** lẫn **CSRF**, các hệ thống lớn áp dụng mô hình **Dual Token**:
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Client (Browser)
+    participant Server as Server API
+    participant DB as Database
 
-1. **Access Token (Hạn ngắn: 5 - 15 phút)**:
-   * Lưu trong bộ nhớ tạm (**In-Memory** / State của React, Redux, Vue).
-   * Dùng để gửi kèm Header `Authorization` khi gọi API.
-   * **Vì sao?** Lưu trong bộ nhớ thì miễn nhiễm XSS và không tự động gửi nên cũng miễn nhiễm CSRF. Khi reload trang, Access Token bị mất đi.
-2. **Refresh Token (Hạn dài: 7 - 30 ngày)**:
-   * Lưu trong **HttpOnly Cookie** (`Secure`, `SameSite=Lax`).
-   * Chỉ dùng để gọi 1 API duy nhất: `/api/auth/refresh` nhằm cấp lại Access Token mới khi bị reload trang hoặc khi Access Token cũ hết hạn.
+    %% Đăng nhập
+    Note over Client, Server: 1. Đăng nhập lần đầu
+    Client->>Server: Gửi Username/Password
+    Server->>DB: Kiểm tra tài khoản hợp lệ
+    DB-->>Server: Hợp lệ
+    Note over Server: Tạo Access Token (15m) &<br/>Refresh Token (7 ngày)
+    Server->>DB: Lưu Refresh Token vào Database
+    Server-->>Client: Trả Access Token (JSON) + Đính kèm Refresh Token vào HttpOnly Cookie
+
+    %% Gửi request bình thường
+    Note over Client, Server: 2. Gọi API thông thường
+    Client->>Server: Gửi request + Header (Authorization: Bearer Access Token)
+    Note over Server: Xác thực chữ ký token hợp lệ
+    Server-->>Client: Trả về dữ liệu API
+
+    %% Hết hạn Access Token
+    Note over Client, Server: 3. Access Token Hết hạn
+    Client->>Server: Gửi request với Access Token đã hết hạn
+    Note over Server: Giải mã thấy token đã quá thời gian hết hạn (exp)
+    Server-->>Client: Trả về lỗi HTTP 401 Unauthorized
+
+    %% Silent Refresh
+    Note over Client, Server: 4. Tự động làm mới Token (Silent Refresh)
+    Client->>Server: Tự động gọi API /refresh-token (Browser tự đính kèm Cookie chứa Refresh Token)
+    Server->>DB: Đối chiếu Refresh Token trong DB & kiểm tra hạn dùng
+    DB-->>Server: Khớp và còn hạn
+    Note over Server: Sinh Access Token mới (15m tiếp theo)
+    Server-->>Client: Trả Access Token mới về cho Client
+    Client->>Server: Gửi lại request ban đầu với Access Token mới
+    Server-->>Client: Trả về dữ liệu API thành công
+```
 
 ---
 
-## 4. Các câu hỏi phỏng vấn thường gặp về JWT (Cheat Sheet)
+## 4. Cơ chế Bảo mật và Lưu trữ tối ưu
 
-> [!TIP]
-> Hãy học thuộc các câu hỏi dưới đây để ghi điểm tuyệt đối khi đi phỏng vấn.
+### 4.1. Tại sao cần lưu Refresh Token vào HttpOnly Cookie?
+*   **Chống tấn công XSS (Cross-Site Scripting)**: Khi bật cờ `HttpOnly = true`, mã độc JavaScript không thể đọc được cookie này. Hacker không thể dùng lệnh `document.cookie` để lấy trộm Refresh Token.
+*   **Tự động gửi kèm**: Trình duyệt sẽ tự động gửi cookie này lên Server bất cứ khi nào ứng dụng gọi API `/refresh-token` mà Frontend không cần viết code đính kèm thủ công.
 
-### Câu 1: Làm thế nào để hủy (Revoke) một JWT Token khi User đổi mật khẩu hoặc bị khóa tài khoản trước khi Token hết hạn?
-* **Trả lời**: Vì JWT hoạt động theo cơ chế Stateless (không lưu trạng thái ở Server), nên mặc định Server sẽ không biết Token đã bị hủy. Có 2 cách xử lý:
-  * **Cách 1**: Sử dụng **Blacklist** lưu trên Redis. Khi User logout hoặc bị khóa, đưa `jti` (ID của token) hoặc chuỗi token đó vào Redis với thời gian hết hạn bằng thời hạn còn lại của token. Mỗi khi nhận request, Server kiểm tra xem token có nằm trong Blacklist của Redis không.
-  * **Cách 2**: Sử dụng mô hình **Access Token (ngắn hạn)** + **Refresh Token**. Ta chỉ cần vô hiệu hóa Refresh Token trong Database. Sau tối đa 10-15 phút, Access Token cũ hết hạn và không thể làm mới được nữa.
+### 4.2. Tại sao phải lưu Refresh Token vào Database?
+*   **Tính năng Đăng xuất (Logout)**: JWT là stateless, không thể thu hồi trước khi hết hạn. Nếu muốn đăng xuất ngay lập tức, Server chỉ cần xóa/vô hiệu hóa Refresh Token trong Database. Khi đó, cookie dù còn hạn cũng sẽ bị từ chối.
+*   **Khóa tài khoản khẩn cấp**: Khi Admin khóa tài khoản của người dùng, Server sẽ xóa toàn bộ Refresh Token của user đó trong DB, buộc người dùng bị đăng xuất ngay lập tức ở lần refresh tiếp theo.
 
-### Câu 2: Signature của JWT được tạo ra để làm gì?
-* **Trả lời**: Signature giúp đảm bảo **tính toàn vẹn dữ liệu (Integrity)**. Nó giúp Server phát hiện xem nội dung Payload hoặc Header gửi lên có bị hacker thay đổi hay không. Nếu bị thay đổi, chữ ký được tính toán lại tại Server sẽ không khớp với Signature trên Token, Server sẽ lập tức từ chối.
+### 4.3. Xử lý khi Frontend và Backend khác Domain (Cross-Origin)
+Để trình duyệt cho phép truyền nhận cookie chéo site an toàn:
+1.  **CORS**: Cấu hình phía Server cho phép tên miền của Frontend được truyền thông tin xác thực (`.AllowCredentials()`).
+2.  **Frontend**: Cấu hình HTTP Client (Axios/Fetch) luôn gửi kèm credentials (`withCredentials: true` hoặc `credentials: 'include'`).
+3.  **SameSite**: 
+    *   **SameSite = SameSiteMode.Lax**: Phù hợp khi Frontend và Backend cùng chạy trên localhost hoặc chung tên miền cha (ví dụ: `app.artify.com` và `api.artify.com`).
+    *   **SameSite = SameSiteMode.None**: Bắt buộc khi Frontend và Backend khác hoàn toàn tên miền (ví dụ: `myfrontend.com` và `myapi.com`). Đi kèm với `Secure = true` (chạy trên HTTPS).
 
-### Câu 3: Làm sao để chống tấn công CSRF khi lưu JWT trong Cookie?
-* **Trả lời**: Để chống CSRF, ta cần:
-  1. Cấu hình cờ `SameSite=Lax` hoặc `SameSite=Strict` cho Cookie để ngăn trình duyệt tự động gửi cookie khi có request từ bên thứ ba.
-  2. Sử dụng cơ chế Anti-CSRF Token hoặc sử dụng phương pháp Dual Token (chỉ lưu Refresh Token trong cookie, Access Token gửi qua Header Authorization).
+---
 
-### Câu 4: Hãy giải thích các cờ `HttpOnly`, `Secure`, `SameSite` khi cấu hình Cookie?
-* **Trả lời**:
-  * **`HttpOnly`**: Cấm JavaScript truy cập cookie này, bảo vệ khỏi lỗ hổng XSS.
-  * **`Secure`**: Cookie chỉ được gửi qua kết nối HTTPS an toàn.
-  * **`SameSite`**: Kiểm soát việc gửi cookie qua các request cross-site:
-    * `Strict`: Không gửi cookie trong bất kỳ request cross-site nào.
-    * `Lax`: Gửi cookie khi người dùng điều hướng bằng các link thông thường (GET request), không gửi ở các request nguy hiểm của bên thứ 3 (POST, PUT...).
-    * `None`: Gửi cookie ở mọi trường hợp (bắt buộc phải đi kèm cờ `Secure`).
+## 5. So sánh Luồng Kiểm tra
+
+| Yêu cầu kiểm tra | Access Token (JWT) | Refresh Token |
+| :--- | :--- | :--- |
+| **Khi nào kiểm tra?** | Mỗi khi có bất kỳ request API nào gửi lên. | Chỉ khi Access Token hết hạn và cần cấp mới. |
+| **Cách Server kiểm tra?** | Giải mã toán học tại chỗ (Stateless), kiểm tra chữ ký và hạn dùng. **Không cần truy vấn Database**. | Nhận từ cookie và thực hiện **truy vấn Database** để tìm dòng tương ứng xem có trùng khớp và còn hiệu lực không. |
+| **Quyền hạn truy cập** | Cung cấp thông tin xác định User là ai, có quyền Role gì (`[Authorize]`). | Chỉ đóng vai trò như một "chìa khóa phụ" để xin cấp khóa chính mới, không dùng để phân quyền trực tiếp. |
