@@ -17,16 +17,6 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Account> Accounts { get; set; }
 
-    public virtual DbSet<AdminActivityLog> AdminActivityLogs { get; set; }
-
-    public virtual DbSet<AdminPermission> AdminPermissions { get; set; }
-
-    public virtual DbSet<AdminRole> AdminRoles { get; set; }
-
-    public virtual DbSet<AdminRolePermission> AdminRolePermissions { get; set; }
-
-    public virtual DbSet<AdminUser> AdminUsers { get; set; }
-
     public virtual DbSet<Agent> Agents { get; set; }
 
     public virtual DbSet<AgentFolder> AgentFolders { get; set; }
@@ -161,6 +151,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<ProductImage> ProductImages { get; set; }
 
+    public virtual DbSet<Role> Roles { get; set; }
+
     public virtual DbSet<ShopCategory> ShopCategories { get; set; }
 
     public virtual DbSet<ShopProduct> ShopProducts { get; set; }
@@ -172,8 +164,6 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<StaticContent> StaticContents { get; set; }
 
     public virtual DbSet<StaticPage> StaticPages { get; set; }
-
-    public virtual DbSet<SystemIpadmin> SystemIpadmins { get; set; }
 
     public virtual DbSet<SystemWidthBlogProduct> SystemWidthBlogProducts { get; set; }
 
@@ -209,87 +199,15 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.FullName).HasMaxLength(255);
             entity.Property(e => e.GoogleId).HasMaxLength(255);
+            entity.Property(e => e.IsActive).HasDefaultValue(true, "DF_Account_IsActive");
             entity.Property(e => e.Password)
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
+            entity.Property(e => e.RoleId).HasDefaultValue(2, "DF_Account_RoleId");
             entity.Property(e => e.Username)
                 .HasMaxLength(255)
-                .IsUnicode(false);
-        });
-
-        modelBuilder.Entity<AdminActivityLog>(entity =>
-        {
-            entity.ToTable("AdminActivityLog");
-
-            entity.HasIndex(e => e.ActionType, "IX_AdminActivityLog_ActionType");
-
-            entity.HasIndex(e => e.AdminUserId, "IX_AdminActivityLog_AdminUserId");
-
-            entity.HasIndex(e => e.CreatedAt, "IX_AdminActivityLog_CreatedAt").IsDescending();
-
-            entity.HasIndex(e => e.TableName, "IX_AdminActivityLog_TableName");
-
-            entity.Property(e => e.ActionType).HasMaxLength(20);
-            entity.Property(e => e.AdminDisplayName).HasMaxLength(100);
-            entity.Property(e => e.AdminUsername).HasMaxLength(50);
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.EntityId).HasMaxLength(50);
-            entity.Property(e => e.IpAddress).HasMaxLength(50);
-            entity.Property(e => e.RequestPath).HasMaxLength(500);
-            entity.Property(e => e.TableName)
-                .HasMaxLength(128)
-                .HasDefaultValue("Unknown");
-        });
-
-        modelBuilder.Entity<AdminPermission>(entity =>
-        {
-            entity.ToTable("AdminPermission");
-
-            entity.HasIndex(e => e.Key, "UQ_AdminPermission_Key").IsUnique();
-
-            entity.Property(e => e.DisplayName).HasMaxLength(100);
-            entity.Property(e => e.GroupName).HasMaxLength(100);
-            entity.Property(e => e.Key)
-                .HasMaxLength(50)
-                .IsUnicode(false);
-        });
-
-        modelBuilder.Entity<AdminRole>(entity =>
-        {
-            entity.ToTable("AdminRole");
-
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Description).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(100);
-        });
-
-        modelBuilder.Entity<AdminRolePermission>(entity =>
-        {
-            entity.ToTable("AdminRolePermission");
-
-            entity.HasIndex(e => new { e.RoleId, e.PermissionId }, "UQ_AdminRolePermission").IsUnique();
-        });
-
-        modelBuilder.Entity<AdminUser>(entity =>
-        {
-            entity.ToTable("AdminUser");
-
-            entity.HasIndex(e => e.Username, "UQ_AdminUser_Username").IsUnique();
-
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.DisplayName).HasMaxLength(100);
-            entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.LastLoginAt).HasColumnType("datetime");
-            entity.Property(e => e.Username)
-                .HasMaxLength(50)
                 .IsUnicode(false);
         });
 
@@ -1563,6 +1481,15 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.ImageType).HasMaxLength(50);
         });
 
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.ToTable("Role");
+
+            entity.HasIndex(e => e.Name, "UQ_Role_Name").IsUnique();
+
+            entity.Property(e => e.Name).HasMaxLength(50);
+        });
+
         modelBuilder.Entity<ShopCategory>(entity =>
         {
             entity.ToTable("ShopCategory");
@@ -1682,37 +1609,6 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Slug).HasMaxLength(255);
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-        });
-
-        modelBuilder.Entity<SystemIpadmin>(entity =>
-        {
-            entity.ToTable("SystemIPAdmin");
-
-            entity.HasIndex(e => e.AdminUserId, "IX_SystemIPAdmin_AdminUserId");
-
-            entity.HasIndex(e => e.IpAddress, "IX_SystemIPAdmin_IpAddress");
-
-            entity.HasIndex(e => new { e.AdminUserId, e.IpAddress }, "UQ_SystemIPAdmin_AdminUser_IP").IsUnique();
-
-            entity.Property(e => e.City).HasMaxLength(100);
-            entity.Property(e => e.Country).HasMaxLength(100);
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.DisplayName).HasMaxLength(100);
-            entity.Property(e => e.IpAddress).HasMaxLength(50);
-            entity.Property(e => e.LastLoginAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.LoginCount).HasDefaultValue(1);
-            entity.Property(e => e.Region).HasMaxLength(100);
-            entity.Property(e => e.UserAgent).HasMaxLength(500);
-            entity.Property(e => e.Username).HasMaxLength(50);
-
-            entity.HasOne(d => d.AdminUser).WithMany(p => p.SystemIpadmins)
-                .HasForeignKey(d => d.AdminUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_SystemIPAdmin_AdminUser");
         });
 
         modelBuilder.Entity<SystemWidthBlogProduct>(entity =>
