@@ -42,7 +42,9 @@ namespace Artify_ecommerce.Services
                 Email = request.Email,
                 FullName = request.Username,  
                 GoogleId = "local",  
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                RoleId = 2, // Mặc định là User
+                IsActive = true
             };
             _context.Accounts.Add(newUser);
             await _context.SaveChangesAsync();
@@ -64,14 +66,16 @@ namespace Artify_ecommerce.Services
             }
             return user;
         }
-        public string GenerateJwtToken(Account account)
+        public string GenerateJwtToken(Account account, string roleName)
         {
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
-                new Claim(ClaimTypes.Name, account.FullName.ToString() ?? string.Empty),
+                new Claim(ClaimTypes.Name, account.FullName ?? string.Empty),
                 new Claim(ClaimTypes.Email, account.Email ?? string.Empty),
+                new Claim(ClaimTypes.Role, roleName)
             };
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

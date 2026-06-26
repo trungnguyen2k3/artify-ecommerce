@@ -1,4 +1,4 @@
-﻿using Artify_ecommerce.DTOs;
+using Artify_ecommerce.DTOs;
 using Artify_ecommerce.DTOs.Auth.Requests;
 using Artify_ecommerce.DTOs.Auth.Responses;
 using Artify_ecommerce.Helpers;
@@ -33,8 +33,12 @@ namespace Artify_ecommerce.Controllers
             // 1. Xác thực thông tin đăng nhập
             var user = await _authService.ValidateUserAsync(request);
 
-            // 2. Tạo Access Token (JWT - ngắn hạn) và Refresh Token (ngẫu nhiên - dài hạn)
-            var accessToken = _authService.GenerateJwtToken(user);
+            // 2. Truy vấn trực tiếp tên Role từ database qua RoleId
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
+            var roleName = role?.Name ?? "User";
+
+            // 3. Tạo Access Token (JWT - ngắn hạn) và Refresh Token (ngẫu nhiên - dài hạn)
+            var accessToken = _authService.GenerateJwtToken(user, roleName);
             var refreshToken = _authService.GenerateRefreshToken();
 
             // 3. Lưu Refresh Token vào Database của User (Hạn 7 ngày)
@@ -78,8 +82,12 @@ namespace Artify_ecommerce.Controllers
                 // 2. Xác thực Refresh Token dưới Database
                 var user = await _authService.GetUserByRefreshTokenAsync(refreshToken);
 
-                // 3. Tạo Access Token mới & Xoay vòng Refresh Token mới (để bảo mật tối đa)
-                var newAccessToken = _authService.GenerateJwtToken(user);
+                // 3. Truy vấn trực tiếp tên Role từ database qua RoleId
+                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == user.RoleId);
+                var roleName = role?.Name ?? "User";
+
+                // 4. Tạo Access Token mới & Xoay vòng Refresh Token mới (để bảo mật tối đa)
+                var newAccessToken = _authService.GenerateJwtToken(user, roleName);
                 var newRefreshToken = _authService.GenerateRefreshToken();
 
                 // 4. Lưu lại Refresh Token mới vào DB

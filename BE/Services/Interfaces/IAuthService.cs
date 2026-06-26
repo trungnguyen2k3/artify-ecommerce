@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Artify_ecommerce.DTOs;
 using Artify_ecommerce.DTOs.Auth;
 using Artify_ecommerce.DTOs.Auth.Requests;
@@ -11,7 +11,7 @@ namespace Artify_ecommerce.Services.Interfaces
         Task<RegisterResponse> RegisterUserAsync(RegisterRequest request);
         Task<Account> ValidateUserAsync(LoginRequest request);
         string GenerateRefreshToken();
-        string GenerateJwtToken(Account account);
+        string GenerateJwtToken(Account account, string roleName);
         Task SaveRefreshTokenAsync(Account account, string refreshToken, DateTime expiryTime);
         Task<Account> GetUserByRefreshTokenAsync(string refreshToken);
     }
