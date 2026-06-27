@@ -30,4 +30,8 @@
     <None Remove="Artify-ecommerce.Tests\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\Admin\" />
+  </ItemGroup>
+
 </Project>
