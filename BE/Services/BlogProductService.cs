@@ -19,6 +19,7 @@ namespace Artify_ecommerce.Services
             _context = context;
         }
 
+      
         public async Task<BlogProductDto> GetByIdAsync(int id)
         {
             // 1. Truy vấn database lấy thông tin thực thể (Entity)
@@ -48,5 +49,30 @@ namespace Artify_ecommerce.Services
 
             return dto;
         }
+        public async Task<(List<BlogProductDto>, int TotalCount)> GetAllAsync(int page, int pageSize)
+        {
+            var query = _context.BlogProducts.AsNoTracking();
+            int totalCount = await query.CountAsync();
+            int skipCount = (page - 1) * pageSize;
+            var items = await query
+                .Skip(skipCount)
+                .Take(pageSize)
+                .Select(blogProduct => new BlogProductDto
+                {
+                    Id = blogProduct.Id,
+                    Name = blogProduct.Name,
+                    Description = blogProduct.Description,
+                    Photo = blogProduct.Photo,
+                    CategoryId = blogProduct.CategoryId,
+                    IsActive = blogProduct.IsActive,
+                    Sku = blogProduct.Sku,
+                    Width = blogProduct.Width,
+                    Slug = blogProduct.Slug,
+                    AuthorName = blogProduct.AuthorName
+                })
+                .ToListAsync();
+            return (items, totalCount);
+        }
+
     }
 }

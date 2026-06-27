@@ -34,6 +34,23 @@ namespace Artify_ecommerce.Controllers.User
 
             return Ok(new ApiResponse<BlogProductDto>(result, "Lấy thông tin sản phẩm Blog thành công"));
         }
-        
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<object>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            if (page <= 0)  page = 1;
+            if(pageSize <=0)  pageSize = 10;
+            if(pageSize>50) pageSize = 50;
+            var(items,totalCount) = await _blogProductService.GetAllAsync(page, pageSize);
+            var responseData = new
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)System.Math.Ceiling(totalCount / (double)pageSize)
+            };
+            return Ok(new ApiResponse<object>(responseData, "Lấy danh sách Blog Product thành công"));
+
+        }
     }
 }

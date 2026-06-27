@@ -14,5 +14,6 @@ namespace Artify_ecommerce.Services.Interfaces
         /// <param name="id">ID của Blog Product</param>
         /// <returns>BlogProductDto chứa thông tin sản phẩm</returns>
         Task<BlogProductDto> GetByIdAsync(int id);
+        Task<(List<BlogProductDto>, int TotalCount)> GetAllAsync(int page, int pageSize);
     }
 }
