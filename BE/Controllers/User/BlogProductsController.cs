@@ -5,7 +5,7 @@ using Artify_ecommerce.Helpers;
 using Artify_ecommerce.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Artify_ecommerce.Controllers
+namespace Artify_ecommerce.Controllers.User
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -34,5 +34,6 @@ namespace Artify_ecommerce.Controllers
 
             return Ok(new ApiResponse<BlogProductDto>(result, "Lấy thông tin sản phẩm Blog thành công"));
         }
+        
     }
 }

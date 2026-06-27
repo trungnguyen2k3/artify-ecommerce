@@ -49,6 +49,24 @@ namespace Artify_ecommerce.Extensions
                     ValidAudience = configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var dbContext = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                        var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        
+                        if (userIdClaim != null && int.TryParse(userIdClaim, out var userId))
+                        {
+                            var user = await dbContext.Accounts.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+                            if (user == null || !user.IsActive)
+                            {
+                                context.Fail("Tài khoản đã bị khóa hoặc không tồn tại.");
+                            }
+                        }
+                    }
+                };
             });
 
             services.AddScoped<IBlogProductService, BlogProductService>();
