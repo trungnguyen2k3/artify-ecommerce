@@ -29,3 +29,7 @@ desktop.ini
 
 ## Local settings
 appsettings*.json
+
+## Uploaded files (wwwroot)
+wwwroot/**/*
+!wwwroot/.gitkeep

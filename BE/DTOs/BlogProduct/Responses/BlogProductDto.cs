@@ -17,7 +17,6 @@ namespace Artify_ecommerce.DTOs
         public string? Slug { get; set; }
         public string? AuthorName { get; set; }
         
-        // Bạn có thể thêm các trường kết hợp hoặc định dạng lại dữ liệu ở đây
-        // Ví dụ: hiển thị URL ảnh đầy đủ, định dạng ngày tháng, v.v.
     }
 }
+    
